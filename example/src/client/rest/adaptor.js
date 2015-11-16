@@ -5,7 +5,7 @@ import { reduce, pairs, extend, map } from 'lodash';
 import { createStore, combineReducers } from 'redux';
 
 function queryParams( obj ) {
-  return '?'+Object.keys(obj).reduce(function(a,k){a.push(k+'='+encodeURIComponent(obj[k]));return a},[]).join('&')
+  return Object.keys(obj).reduce((a, k) => a.concat([ `${k}=${encodeURIComponent(obj[k])}` ]), []).join('&');
 }
 
 function rootReducer(state, action){
@@ -27,7 +27,7 @@ export default class Adaptor extends AdrenalineAdaptor {
   selectState(store, query, variables){
     const state = store.getState();
     const resolvedRequirements = query(variables);
-    const selectedState = reduce(resolvedRequirements, (result, params, type)=>{
+    const selectedState = reduce(resolvedRequirements, (result, params, type) => {
       result[type] = state[type];
       return result;
     }, {});
@@ -36,10 +36,12 @@ export default class Adaptor extends AdrenalineAdaptor {
 
   performQuery(store, query, variables){
     const resolvedRequirements = query(variables)
-    const queries = map(pairs(resolvedRequirements), ([type, params])=>{
+    const queries = map(pairs(resolvedRequirements), ([type, params]) => {
       const queryString = Object.keys(params).reduce(function(a,k){a.push(k+'='+encodeURIComponent(params[k]));return a},[]).join('&');
       const url = `/rest/${type}?${queryString}`;
-      return fetch(url).then((response)=>response.json()).then((json)=>{
+      return fetch(url)
+      .then((response) => response.json())
+      .then((json) => {
         this.dispatchCacheUpdate(store, {
           payload: {
             type,
@@ -48,8 +50,6 @@ export default class Adaptor extends AdrenalineAdaptor {
         });
       });
     })
-    return Promise.all(queries).then(()=>{
-      return {query, variables};
-    });
+    return Promise.resolve({ query, variables });
   }
 }
