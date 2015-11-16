@@ -37,7 +37,7 @@ export default class Adaptor extends AdrenalineAdaptor {
   performQuery(store, query, variables){
     const resolvedRequirements = query(variables)
     const queries = map(pairs(resolvedRequirements), ([type, params]) => {
-      const queryString = Object.keys(params).reduce(function(a,k){a.push(k+'='+encodeURIComponent(params[k]));return a},[]).join('&');
+      const queryString = queryParams(params);
       const url = `/rest/${type}?${queryString}`;
       return fetch(url)
       .then((response) => response.json())
